@@ -37,7 +37,7 @@ function Copy-DirTreeRecursively {
 	
 	$FailedItems `
 		| Foreach-Object { `
-			Log $LogPath ("ERROR: failed to process {0}" -f $_.CategoryInfo.LocationTarget) `
+			Log $LogPath ("ERROR: failed to process`t{0}" -f $_.CategoryInfo) `
 		} 
 
 }
@@ -45,8 +45,6 @@ Export-ModuleMember -Function Copy-DirTreeRecursively
 
 function CopyRelative($logPath, $path, $sourcePathRoot, $destinationPath)
 {
-	Log $logPath ("found {0} in source path {1} going to {2}" -f $path.FullName, $sourcePathRoot, $destinationPath)
-
 	try {
 		#strip out the root portion of the path
 		#this will create a relative path preserving the folder
