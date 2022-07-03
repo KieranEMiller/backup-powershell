@@ -31,7 +31,7 @@ function Export-DirTreeRecursively {
 					Expression={[int]($_.Length / 1kb)} `
 			} `
 		| Foreach-Object { `
-			Write-Host $_.FullName; `
+			Log $LogPath $_.FullName; `
 			$_ `
 		} `
 		| Export-Csv -Path $ExportCsvPath -NoTypeInformation 
