@@ -1,3 +1,49 @@
+function Export-DirTreeRecursively {
+	param(
+		[Parameter(Mandatory=$true, Position=0)]
+		[string]$SourcePath,
+		
+		[Parameter(Mandatory=$true, Position=1)]
+		[string]$ExportCsvPath,
+		
+		[string]$LogPath = ""
+    )
+
+	Log $LogPath ("config: source:`t`t{0}" -f $SourcePath)
+	Log $LogPath ("config: export to:`t`t{0}" -f $ExportCsvPath)
+	Log $LogPath ("config: logging to:`t`t{0}" -f $LogPath)
+
+	if(-Not(IsValidDirectory $SourcePath )) {
+		throw "missing or invalid argument parameter sourcePath.  you must specify a valid source path to copy from"
+	}
+	
+	$paths = `
+		Get-ChildItem $SourcePath -Recurse -Force -ErrorVariable +FailedItems `
+		| Select FullName `
+			, Directory `
+			, Name `
+			, CreationTime `
+			, LastWriteTime `
+			, LastAccessTime `
+			, Length `
+			, @{ `
+					Name='LengthInKB'; `
+					Expression={[int]($_.Length / 1kb)} `
+			} `
+		| Foreach-Object { `
+			Write-Host $_.FullName; `
+			$_ `
+		} `
+		| Export-Csv -Path $ExportCsvPath -NoTypeInformation 
+		
+	
+	$FailedItems `
+		| Foreach-Object { `
+			Log $LogPath ("ERROR: failed to process: {0}" -f $_.CategoryInfo) `
+		} 
+}
+Export-ModuleMember -Function Export-DirTreeRecursively
+
 function Copy-DirTreeRecursively {
 	param(
 		[Parameter(Mandatory=$true, Position=0)]
@@ -9,9 +55,18 @@ function Copy-DirTreeRecursively {
 		[string]$LogPath = ""
     )
 
-	#throws an exception when either path is invalid
-	ValidateAndDocumentInputParameters $SourcePath $DestinationPath $LogPath
+	Log $LogPath ("config: source:`t`t{0}" -f $SourcePath)
+	Log $LogPath ("config: destination:`t`t{0}" -f $DestinationPath)
+	Log $LogPath ("config: logging to:`t`t{0}" -f $LogPath)
 
+	if(-Not(IsValidDirectory $SourcePath )) {
+		throw "missing or invalid argument parameter sourcePath.  you must specify a valid source path to copy from"
+	}
+	
+	if(-Not(IsValidDirectory $DestinationPath)) {
+		throw "missing or invalid argument parameter destPath.  you must specify a valid destination path to copy to"
+	}
+	
 	$paths = `
 		Get-ChildItem $SourcePath -Recurse -Force -ErrorVariable +FailedItems `
 		| Foreach-Object { `
@@ -49,13 +104,7 @@ function CopyRelative($logPath, $path, $sourcePathRoot, $destinationPath)
 
 function ValidateAndDocumentInputParameters($SourcePath, $DestinationPath, $LogPath)
 {
-	if(-Not(IsValidDirectory $SourcePath )) {
-		throw "missing or invalid argument parameter sourcePath.  you must specify a valid source path to copy from"
-	}
-	
-	if(-Not(IsValidDirectory $DestinationPath)) {
-		throw "missing or invalid argument parameter destPath.  you must specify a valid destination path to copy to"
-	}
+
 	Log $LogPath ("config source: {0}" -f $SourcePath)
 	Log $LogPath ("config destination: {0}" -f $DestinationPath)
 	Log $LogPath ("logging to: {0}" -f $LogPath)
